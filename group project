@@ -1,0 +1,374 @@
+# Student Grade Management System
+# Preloaded students: Zayyan, Mo, Georgio, Anthony, Mostafa
+
+students = {
+    "Zayyan": [],
+    "Mo": [],
+    "Georgio": [],
+    "Anthony": [],
+    "Mostafa": []
+}
+
+
+def display_menu():
+    """
+    Print the main menu options.
+    """
+    print("\n===== Student Grade Management System =====")
+    print("Students:", ", ".join(students.keys()))
+    print("1) Add a new student")
+    print("2) Add grade to student")
+    print("3) View student report")
+    print("4) View class summary")
+    print("5) Show top student")
+    print("6) Remove last grade (undo)")
+    print("7) Save to file")
+    print("8) Load from file")
+    print("0) Exit")
+
+
+def normalize_name(name):
+    """
+    Normalize a student name by trimming spaces and using title case.
+
+    Parameters:
+        name (str): Raw user input.
+
+    Returns:
+        str: Cleaned name (Title Case).
+    """
+    return name.strip().title()
+
+
+def get_menu_choice():
+    """
+    Read and validate the user's menu choice.
+
+    Returns:
+        int: The menu option chosen by the user.
+    """
+    while True:
+        try:
+            choice = int(input("Choose an option (0-8): ").strip())
+            return choice
+        except ValueError:
+            print("Invalid input. Please enter a number (0 to 8).")
+
+
+def add_student(students_dict):
+    """
+    Add a new student to the dictionary.
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    name = normalize_name(input("Enter new student name: "))
+
+    if name == "":
+        print("Name cannot be empty.")
+        return
+
+    if name in students_dict:
+        print("That student already exists.")
+        return
+
+    students_dict[name] = []
+    print("Student added:", name)
+
+
+def read_grade():
+    """
+    Read a grade from the user and validate it (0 to 100).
+
+    Returns:
+        float: A valid grade between 0 and 100.
+    """
+    while True:
+        try:
+            grade = float(input("Enter grade (0-100): ").strip())
+            if grade < 0 or grade > 100:
+                print("Grade must be between 0 and 100.")
+                continue
+            return grade
+        except ValueError:
+            print("Invalid input. Please enter a numeric grade (e.g., 85 or 92.5).")
+
+
+def add_grade(students_dict):
+    """
+    Add a grade to an existing student (includes input validation).
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    name = normalize_name(input("Enter student name: "))
+
+    if name not in students_dict:
+        print("Student not found. Valid students are:", ", ".join(students_dict.keys()))
+        return
+
+    grade = read_grade()
+
+    # Small validation: prevent identical consecutive grades
+    if len(students_dict[name]) > 0 and grade == students_dict[name][-1]:
+        print("That grade is the same as the last grade entered. Not added.")
+        return
+
+    students_dict[name].append(grade)
+    print("Grade added to", name)
+
+
+def calculate_average(grades):
+    """
+    Calculate the average of a list of grades.
+
+    Parameters:
+        grades (list): List of grades (floats).
+
+    Returns:
+        float: The average, or 0.0 if there are no grades.
+    """
+    if len(grades) == 0:
+        return 0.0
+    return sum(grades) / len(grades)
+
+
+def letter_grade(avg):
+    """
+    Convert a numeric average to a letter grade.
+
+    Parameters:
+        avg (float): Numeric average.
+
+    Returns:
+        str: Letter grade (A, B, C, D, F).
+    """
+    if avg >= 90:
+        return "A"
+    elif avg >= 80:
+        return "B"
+    elif avg >= 70:
+        return "C"
+    elif avg >= 60:
+        return "D"
+    else:
+        return "F"
+
+
+def student_report(students_dict):
+    """
+    Print a report for one student: grades, average, and letter grade.
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    name = normalize_name(input("Enter student name: "))
+
+    if name not in students_dict:
+        print("Student not found.")
+        return
+
+    grades = students_dict[name]
+    avg = calculate_average(grades)
+
+    print("\n--- Student Report ---")
+    print("Name:", name)
+    print("Grades:", grades)
+    print("Average:", round(avg, 2))
+    print("Letter Grade:", letter_grade(avg))
+
+
+def class_summary(students_dict):
+    """
+    Print a summary of all students and their averages.
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    print("\n--- Class Summary ---")
+    for name in students_dict:
+        avg = calculate_average(students_dict[name])
+        print(name, "- Average:", round(avg, 2), "- Letter:", letter_grade(avg))
+
+
+def top_student(students_dict):
+    """
+    Find and print the student with the highest average (only among students with grades).
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    best_name = None
+    best_avg = -1
+
+    for name in students_dict:
+        grades = students_dict[name]
+        if len(grades) == 0:
+            continue
+
+        avg = calculate_average(grades)
+        if avg > best_avg:
+            best_avg = avg
+            best_name = name
+
+    if best_name is None:
+        print("No grades entered yet, so there is no top student.")
+    else:
+        print("Top student:", best_name, "with average", round(best_avg, 2))
+
+
+def remove_last_grade(students_dict):
+    """
+    Remove the most recently added grade (undo) for a student.
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+
+    Returns:
+        None
+    """
+    name = normalize_name(input("Enter student name: "))
+
+    if name not in students_dict:
+        print("Student not found.")
+        return
+
+    if len(students_dict[name]) == 0:
+        print("No grades to remove for", name)
+        return
+
+    removed = students_dict[name].pop()
+    print("Removed last grade", removed, "from", name)
+
+
+def save_to_file(students_dict, filename="grades.txt"):
+    """
+    Save students and grades to a text file formatted like:
+    Name:grade1,grade2,grade3
+
+    Parameters:
+        students_dict (dict): Student names mapped to their grade lists.
+        filename (str): The filename to save to.
+
+    Returns:
+        None
+    """
+    try:
+        fp = open(filename, "w")
+        for name in students_dict:
+            grades = students_dict[name]
+
+            grades_str = ""
+            for i in range(len(grades)):
+                grades_str += str(grades[i])
+                if i != len(grades) - 1:
+                    grades_str += ","
+
+            fp.write(name + ":" + grades_str + "\n")
+        fp.close()
+        print("Saved successfully to", filename)
+    except OSError:
+        print("File error: could not save to", filename)
+
+
+def load_from_file(filename="grades.txt"):
+    """
+    Load students and grades from a text file formatted like:
+    Name:grade1,grade2,grade3
+
+    Parameters:
+        filename (str): The filename to load from.
+
+    Returns:
+        dict: Dictionary mapping student names to grade lists.
+    """
+    loaded = {}
+    try:
+        fp = open(filename, "r")
+        for line in fp:
+            line = line.strip()
+            if line == "":
+                continue
+
+            parts = line.split(":")
+            if len(parts) != 2:
+                continue
+
+            name = normalize_name(parts[0])
+            grades_part = parts[1].strip()
+
+            grades_list = []
+            if grades_part != "":
+                grade_strings = grades_part.split(",")
+                for g in grade_strings:
+                    try:
+                        grades_list.append(float(g))
+                    except ValueError:
+                        # Skip invalid values in file
+                        pass
+
+            loaded[name] = grades_list
+
+        fp.close()
+        print("Loaded successfully from", filename)
+        return loaded
+
+    except FileNotFoundError:
+        print("File not found:", filename)
+        return loaded
+    except OSError:
+        print("File error: could not load from", filename)
+        return loaded
+
+
+def main():
+    """
+    Run the main program loop (menu).
+    """
+    global students
+
+    while True:
+        display_menu()
+        choice = get_menu_choice()
+
+        if choice == 1:
+            add_student(students)
+        elif choice == 2:
+            add_grade(students)
+        elif choice == 3:
+            student_report(students)
+        elif choice == 4:
+            class_summary(students)
+        elif choice == 5:
+            top_student(students)
+        elif choice == 6:
+            remove_last_grade(students)
+        elif choice == 7:
+            save_to_file(students)
+        elif choice == 8:
+            loaded_students = load_from_file()
+            if len(loaded_students) > 0:
+                students = loaded_students
+        elif choice == 0:
+            print("Exiting program. Goodbye!")
+            break
+        else:
+            print("Invalid option. Choose from 0 to 8.")
+
+
+main()
